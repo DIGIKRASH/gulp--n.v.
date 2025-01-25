@@ -11,7 +11,6 @@ import ifPlugin from "gulp-if"; // Условное ветвление
 import fileinclude from "gulp-file-include"; // Соединение файлов в один
 import webpHtml from "gulp-webp-html-nosvg"; // Вставка webp в html
 import versionNumber from "gulp-version-number"; //
-import htmlmin from "gulp-htmlmin"; // Минифицируем HTML
 import del from "del"; // Удаление файлов
 import * as dartSass from 'sass';
 import gulpSass from 'gulp-sass';
@@ -23,7 +22,6 @@ import groupCssMediaQueries from "gulp-group-css-media-queries"; // Группи
 import webp from "gulp-webp"; // Создаем webp
 import imagemin from "gulp-imagemin"; // Минифицируем картинки
 import fs from "fs"; // Для шрифтов
-import fonter from "gulp-fonter"; // Для шрифтов
 import ttf2woff2 from "gulp-ttf2woff2"; // Преобразование ttf в woff
 import gulpSvgSprite from "gulp-svg-sprite"; // Создание спрайтов svg
 import webpack from "webpack-stream"; // Использование ES6 синтаксиса
