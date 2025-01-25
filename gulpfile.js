@@ -3,7 +3,6 @@ import gulp from "gulp";
 // node-modules
 import * as nodePath from "path";
 // Все Плагины
-import plumber from "gulp-plumber"; // Обработка ошибок
 import notify from "gulp-notify"; // Сообщения (подсказки)
 import browserSync from "browser-sync"; // Локальный сервер
 import newer from "gulp-newer"; // Проверка обновления
@@ -11,18 +10,18 @@ import ifPlugin from "gulp-if"; // Условное ветвление
 import fileinclude from "gulp-file-include"; // Соединение файлов в один
 import webpHtml from "gulp-webp-html-nosvg"; // Вставка webp в html
 import versionNumber from "gulp-version-number"; //
-import del from "del"; // Удаление файлов
+import {deleteSync} from "del"; // Удаление файлов
 import * as dartSass from 'sass';
 import gulpSass from 'gulp-sass';
 import rename from "gulp-rename"; // Переименование файлов
 import cleanCss from "gulp-clean-css"; // Сжатие CSS файла
-import webpcss from "gulp-webpcss"; // Вывод WEBP изображений
+// import webpcss from "gulp-webpcss"; // Вывод WEBP изображений
 import autoprefixer from "gulp-autoprefixer"; // Добавление вендорных префиксов
 import groupCssMediaQueries from "gulp-group-css-media-queries"; // Группировка медиа запросов
 import webp from "gulp-webp"; // Создаем webp
-import imagemin from "gulp-imagemin"; // Минифицируем картинки
-import fs from "fs"; // Для шрифтов
-import ttf2woff2 from "gulp-ttf2woff2"; // Преобразование ttf в woff
+// import imagemin from "gulp-imagemin"; // Минифицируем картинки
+import fs from "fs"; // Для шрифтов1
+// import ttf2woff2 from "gulp-ttf2woff2"; // Преобразование ttf в woff
 import gulpSvgSprite from "gulp-svg-sprite"; // Создание спрайтов svg
 import webpack from "webpack-stream"; // Использование ES6 синтаксиса
 
@@ -76,24 +75,23 @@ const server = () => {
 };
 
 // Удаление папки dist
-const reset = () => {
-    return del(path.clean);
+const reset = (done) => {
+    deleteSync(path.clean);
+    done();
 };
 
 // Функция копирования из папки files
-const copy = () => {
-    return gulp.src(path.src.files).pipe(gulp.dest(path.build.files));
+const copy = (done) => {
+    gulp.src(path.src.files)
+        .pipe(gulp.dest(path.build.files))
+        .on('end', done);
 };
 
 // Функция преобразования html
 const html = () => {
     return gulp
         .src(path.src.html)
-        .pipe(plumber(notify.onError({
-            title: "HTML", message: "Error: <%= error.message %>",
-        })))
         .pipe(fileinclude())
-        .pipe(ifPlugin(app.isBuild, webpHtml(), htmlmin({collapseWhitespace: true})))
         .pipe(ifPlugin(app.isBuild, versionNumber({
             value: "%DT%", append: {
                 key: "_v", cover: 0, to: ["css", "js"],
@@ -107,16 +105,13 @@ const html = () => {
 const scss = () => {
     return gulp
         .src(path.src.scss, {sourcemaps: true})
-        .pipe(plumber(notify.onError({
-            title: "SCSS", message: "Error: <%= error.message %>",
-        })))
         .pipe(sass({
             outputStyle: "expanded",
         }).on('error', sass.logError))
         .pipe(groupCssMediaQueries())
-        .pipe(ifPlugin(app.isBuild, webpcss({
-            webpClass: ".webp", noWebpClass: ".no-webp",
-        })))
+        // .pipe(ifPlugin(app.isBuild, webpcss({
+        //     webpClass: ".webp", noWebpClass: ".no-webp",
+        // })))
         .pipe(autoprefixer({
             grid: true, overrideBrowserslist: ["last 3 versions"], cascade: true,
         }))
@@ -132,9 +127,6 @@ const scss = () => {
 const js = () => {
     return gulp
         .src(path.src.js, {sourcemaps: true})
-        .pipe(plumber(notify.onError({
-            title: "JS", message: "Error: <%= error.message %>",
-        })))
         .pipe(webpack({
             mode: 'development', output: {
                 filename: 'script.js'
@@ -148,17 +140,14 @@ const js = () => {
 const img = () => {
     return (gulp
         .src(path.src.img)
-        .pipe(plumber(notify.onError({
-            title: "IMAGES", message: "Error: <%= error.message %>",
-        })))
         .pipe(ifPlugin(app.isBuild, newer(path.build.img)))
         .pipe(ifPlugin(app.isBuild, webp()))
         .pipe(ifPlugin(app.isBuild, gulp.dest(path.build.img)))
         .pipe(gulp.src(path.src.img))
         .pipe(newer(path.build.img))
-        .pipe(imagemin({
-            progressive: true, svgoPlugins: [{removeViewBox: false}], interlaced: true, optimiazationLevel: 3, // 0 to 7
-        }))
+        // .pipe(imagemin({
+        //     progressive: true, svgoPlugins: [{removeViewBox: false}], interlaced: true, optimiazationLevel: 3, // 0 to 7
+        // }))
         .pipe(gulp.dest(path.build.img))
         .pipe(gulp.src(path.src.svg))
         .pipe(gulp.dest(path.build.img))
@@ -170,15 +159,12 @@ const ttf2woff = () => {
     // Ищем файлы шрифтов .ttf
     return (gulp
         .src(`${path.srcFolder}/fonts/*.ttf`, {})
-        .pipe(plumber(notify.onError({
-            title: "FONTS", message: "Error: <%= error.message %>",
-        })))
         // Выгружвем в папку с результтом
         .pipe(gulp.dest(`${path.build.fonts}`))
         // Ищем файлы шрифтов .ttf
         .pipe(gulp.src(`${path.srcFolder}/fonts/*.ttf`, {}))
         // Конвертация в .woff2
-        .pipe(ttf2woff2())
+        // .pipe(ttf2woff2())
         // Выгружвем в папку с результтом
         .pipe(gulp.dest(`${path.build.fonts}`)));
 };
@@ -246,9 +232,6 @@ const fontsStyle = () => {
 const svgSprite = () => {
     return gulp
         .src(path.src.svgIcons)
-        .pipe(plumber(notify.onError({
-            title: "SVG", message: "Error: <%= error.message %>",
-        })))
         .pipe(gulpSvgSprite({
             mode: {
                 stack: {
@@ -286,13 +269,9 @@ const mainTasks = gulp.series(ttf2woff, gulp.parallel(copy, html, scss, js, img,
 
 // Построение сценариев выполнения задач
 const start = gulp.series(reset, mainTasks, gulp.parallel(watcher, server));
-const dev = gulp.series(reset, mainTasks);
-const build = gulp.series(reset, mainTasks);
 const fonts = fontsStyle
 
 // Экспорт сценариев
-export {dev};
-export {build};
 export {fonts};
 
 // Выполлнение сценария по умолчанию
